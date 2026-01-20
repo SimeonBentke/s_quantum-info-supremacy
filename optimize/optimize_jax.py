@@ -217,7 +217,6 @@ def random_init_params(num_qubits, depth, rng=np.random):
     product_params = np.concatenate(
         [haar_u3_params(rng)[:2] for i in range(num_qubits)]
     )
-
     # Then generate the U3 parameters
     u3_params = np.concatenate([haar_u3_params(rng) for i in range(2 * num_rzz_params)])
     # Initialize all RZZ parameters to 0
