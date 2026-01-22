@@ -43,7 +43,7 @@ def random_haar_state(n, rng):
     return state
 
 
-def run_optimization(job):
+def run_optimization(job,params):
     i = job["i"]
     s = job["seed"]
     target_state = job["target_state"]
@@ -55,8 +55,7 @@ def run_optimization(job):
     rng = np.random.default_rng(s)
 
     start = time.time()
-
-    opt = optimize(target_state, depth, noisy=noisy, rng=rng)
+    opt = optimize(target_state, depth=depth, method="COBYQA", init_params=params ,noisy=noisy, maxiter=10, rng=rng)
     opt_params = opt.x
 
     out_state = output_state(n, opt_params)
@@ -79,15 +78,17 @@ if __name__ == "__main__":
     n = 12
     noisy = True
 
-    depths = list(range(10, 110, 10))
+    depths = list(range(2, 100, 20))
     noiseless_fidelities = []
     noise_fidelities = []
     fidelities = []
+    #first_params=[]
 
     # (Optional, but recommended) keep the same target state for all depths
     # so the plot reflects "depth effect" rather than "different random targets".
     rng_target = np.random.default_rng(seed)
     target_state = random_haar_state(n, rng=rng_target)
+    params=None
 
     for depth in depths:
         i = 1  # job index (not important here)
@@ -99,35 +100,41 @@ if __name__ == "__main__":
             "depth": depth,
             "noisy": noisy,
         }
+        if params is not None:
+            params = np.concatenate([params,np.random.uniform(-np.pi, np.pi, 84)])
 
-        result = run_optimization(job)
+        result = run_optimization(job,params)
+
+        #params=result["opt_params"]
 
         nf = float(np.array(result["noiseless_fidelity"]))
         zf = float(np.array(result["noise_fidelity"]))
         f=nf*zf
+        #first_param = float(params[0])
 
         noiseless_fidelities.append(nf)
         noise_fidelities.append(zf)
         fidelities.append(f)
+        #first_params.append(first_param)
 
         print(f"depth={depth:2d} | "f"noiseless fidelity={nf:.6f} | "f"noise fidelity={zf:.6f} | "f"overall fidelity={f:.6f}")
 
 
-    # ---------- Plot ----------
-    plt.figure()
+# ---------- Plot ----------
+plt.figure()
 
-    plt.plot(depths, noiseless_fidelities, marker="o", label="Noiseless fidelity")
-    plt.plot(depths, noise_fidelities, marker="s", label="Noise fidelity factor")
-    plt.plot(depths, fidelities, marker="^", label="Overall fidelity")
+plt.plot(depths, noiseless_fidelities, marker="o", label="Noiseless fidelity")
+plt.plot(depths, noise_fidelities, marker="s", label="Noise fidelity factor")
+plt.plot(depths, fidelities, marker="^", label="Overall fidelity")
+#plt.plot(depths, first_params, marker="x", label="First parameter")
 
-    plt.xlabel("Circuit depth")
-    plt.ylabel("Fidelity")
-    plt.title("Fidelity vs depth")
-    plt.legend()
-    plt.grid(True)
+plt.xlabel("Circuit depth")
+plt.ylabel("Value")
+plt.title("Fidelity and first parameter vs depth")
+plt.legend()
+plt.grid(True)
 
-    plt.show()
-
+plt.show()
 
 
 

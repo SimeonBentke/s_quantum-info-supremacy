@@ -274,8 +274,11 @@ def optimize(
         raise Exception("depth must be an integer multiple of depth_modulus")
 
     total_num_params = num_qubits * 2 + num_gate_params(num_qubits, depth)
+   
     if init_params is None:
         init_params = random_init_params(num_qubits, depth, rng=rng)
+    else:
+         print(total_num_params, len(init_params))
     init_params = jnp.array(init_params)
     if init_params.shape != (total_num_params,):
         raise Exception("init_params must be a 1D array of length num_params(depth)")
